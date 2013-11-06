@@ -1,0 +1,46 @@
+#!/bin/sh
+
+# convert_temp - Temperature conversion script that lets the user enter
+# a temperature in Celcius, Fahrenheit or Kelvin and recieve the
+# equivalent temperature in the other two units as the output.
+
+if [ $# -eq 0 ]; then
+    cat << EOF >&2
+Usage: $2 temperature[C|F|K]
+where the suffix:
+    C   indicates input is in Celcius (default)
+    F   indicates input is in Fahrenheit
+    K   indicates input is in Kelvin
+EOF
+        exit 1
+fi
+
+unit="$(echo $1|sed -e 's/[-[:digit:]]*//g' | tr '[:lower:]' '[:upper:]' )"
+temp="$(echo $1|sed -e 's/[^-[:digit:]]*//g')"
+
+case ${unit:=C}
+in
+
+    C ) # Celsius to Fahrenheit formula: Tf = (9/5)*Tc+32
+    cels=$temp
+    kelv="$(echo "scale=2;$cels + 273.15" | bc)"
+    farn="$(echo "scale=2;((9/5) * $cels) + 32" | bc)"
+    ;;
+
+    F ) # Fahrenheit to Celcius formula: Tc = (F - 32) / 1.8
+    farn="$temp"
+    cels="$(echo "scale=2;($farn -32) / 1.8" | bc)"
+    kelv="$(echo "scale=2;$cels + 273.15" | bc)"
+    ;;
+
+    K ) # Celsius = Kelvin - 273.15, then use Cels -> Fahr formula
+    kelv=$temp
+    cels="$(echo "scale=2; $kelv - 273.15" | bc)"
+    farn="$(echo "scale=2; ((9/5) * $cels) + 32" | bc)"
+esac
+
+echo "Celsius = $cels"
+echo "Fahrenheit = $farn"
+echo "Kelvin = $kelv"
+
+exit 0
